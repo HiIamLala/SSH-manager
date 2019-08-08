@@ -1,0 +1,17 @@
+{
+  "name": "sshmanager-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "none",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "mysql": "^2.17.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node ./database-test.js"
+  },
+  "author": "Liam",
+  "license": "ISC"
+}

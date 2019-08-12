@@ -31,6 +31,29 @@ function initProjectDetail(callback) {
             project_manager.innerHTML = "Project manager: <strong>" + result[0].ProjectManagerName + " " + check() + "</strong>";
             project_manager.classList.add('pad-proj');
             container.appendChild(project_manager);
+            if(JSON.parse(document.cookie).IsAdmin || ManagerID==JSON.parse(document.cookie).UserID){
+                var delete_butt = document.createElement('button');
+                delete_butt.classList.add('btn', 'btn-outline-danger');
+                delete_butt.setAttribute("project-id", projec_id);
+                delete_butt.style.marginRight = "10px";
+                delete_butt.style.marginLeft = "auto";
+                delete_butt.style.cssFloat = "right";
+                delete_butt.innerHTML = "Delele";
+                delete_butt.onclick = function () {
+                    var xhttp = new XMLHttpRequest();
+                    xhttp.onloadend = function () {
+                        if(this.status==204 || this.status==200){
+                            window.location.replace('/');
+                        }
+                        else{
+                            noti(new Date().getTime(),"Fail", "Delete project fail");
+                        }
+                    }
+                    xhttp.open("GET", `http://localhost:8080/deleteproject?id=${projec_id}&token=${JSON.parse(document.cookie).token}`, true);
+                    xhttp.send();
+                }
+                container.appendChild(delete_butt);
+            }
             callback();
         }
         else if(this.status == 456) {
@@ -202,18 +225,55 @@ function CreateTableFromJSON(myBooks, divContainer) {
         for (var j = 0; j < col.length; j++) {
             var tabCell = tr.insertCell(-1);
             if (col[j] == 'InstanceName') {
+                var ssh_group = document.createElement('div');
+                ssh_group.classList.add("btn-group");
+                ssh_group.style.marginRight = "10px";
+                ssh_group.style.marginLeft = "auto";
+                ssh_group.style.cssFloat = "right";
                 var ssh_butt = document.createElement('button');
-                ssh_butt.classList.add('btn', 'btn-outline-success');
-                ssh_butt.style.marginRight = "10px";
-                ssh_butt.style.marginLeft = "auto";
-                ssh_butt.style.cssFloat = "right";
+                ssh_butt.classList.add("btn","btn-success");
                 ssh_butt.setAttribute("instance-id", myBooks[i].InstanceID);
                 ssh_butt.innerHTML = "SSH";
                 ssh_butt.onclick = function () {
                     var win = window.open("http://localhost:8080/ssh?instance-id=" + this.getAttribute("instance-id"), "Title", "toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800,height=600");
                 }
+                var ssh2_butt = document.createElement('button');
+                ssh2_butt.setAttribute("data-toggle","dropdown");
+                ssh2_butt.setAttribute("aria-haspopup","true");
+                ssh2_butt.setAttribute("aria-expanded","false");
+                ssh2_butt.classList.add("btn","btn-success","dropdown-toggle","dropdown-toggle-split");
+                $(ssh2_butt).html('<span class="sr-only">Toggle Dropdown</span>');
+                var ssh2_opt = document.createElement("div");
+                ssh2_opt.classList.add("dropdown-menu");
+                var ssh_term = document.createElement("a");
+                ssh_term.classList.add("dropdown-item","ssh2");
+                ssh_term.innerHTML = "SSH via Terminal";
+                ssh_term.setAttribute("instance-id",myBooks[i].InstanceID);
+                ssh_term.onclick = function(){
+                    var xhttp =  new XMLHttpRequest();
+                    xhttp.onloadend = function() {
+                        if(this.status == 200){
+                            var temp = document.createElement('textarea');
+                            temp.value = this.responseText;
+                            document.body.appendChild(temp);
+                            temp.select();
+                            document.execCommand('copy');
+                            temp.remove();
+                            noti(new Date().getTime(),"Success", `Use this token to connect<br>${this.responseText}<br>Token has been copied to clipboard`);
+                        }
+                        else{
+                            noti(new Date().getTime(),"Fail", `Fail to get token`);
+                        }
+                    };
+                    xhttp.open("GET",`http://localhost:8080/getconnect?id=${this.getAttribute('instance-id')}&token=${JSON.parse(document.cookie).token}`);
+                    xhttp.send();
+                };
+                $(ssh2_opt).append(ssh_term);
                 tabCell.innerHTML = myBooks[i][col[j]];
-                tabCell.appendChild(ssh_butt);
+                ssh_group.appendChild(ssh_butt);
+                ssh_group.appendChild(ssh2_butt);
+                ssh_group.appendChild(ssh2_opt);
+                tabCell.appendChild(ssh_group);
                 if (JSON.parse(document.cookie).IsAdmin) {
                     var delete_butt = document.createElement('button');
                     delete_butt.classList.add('btn', 'btn-outline-danger');
@@ -325,6 +385,6 @@ function noti(id, header, content) {
         </div>
     </div>`
     );
-    $(`#${id}`).toast({delay:10000});
+    $(`#${id}`).toast({delay:3600000});
     $(`#${id}`).toast("show");
 }

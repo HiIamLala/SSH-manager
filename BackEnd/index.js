@@ -37,6 +37,62 @@ try{
                 });
             });
 
+            app.get('/deleteproject', function(req,res){
+                var token = req.query.token;
+                var project_id = req.query.id;
+                if(token.length){
+                    if(token.split("@")[0]< new Date().getTime()){
+                        res.sendStatus(456);
+                    }
+                    else{
+                        query.getUserFromToken(con, token,(err,result)=>{
+                            if(err){
+                                res.sendStatus(500);
+                            }
+                            else if(result) {
+                                if(result.IsAdmin){
+                                    query.removeProject(con, project_id,(err,result2)=>{
+                                        if(err){
+                                            res.sendStatus(500);
+                                        }
+                                        else{
+                                            res.sendStatus(204);
+                                        }
+                                    });
+                                }
+                                else{
+                                    var user_id = result.UserID;
+                                    query.getProjectDetail(con, project_id, (err,result3)=>{
+                                        if(err){
+                                            res.sendStatus(500);
+                                        }
+                                        else if(result3.ProjectManager === user_id){
+                                            query.removeProject(con, project_id, (err,result4)=>{
+                                                if(err){
+                                                    res.sendStatus(500);
+                                                }
+                                                else{
+                                                    res.sendStatus(204);
+                                                }
+                                            });
+                                        }
+                                        else{
+                                            res.sendStatus(403);
+                                        }
+                                    });
+                                }
+                            }
+                            else{
+                                res.sendStatus(401);
+                            }
+                        });
+                    }
+                }
+                else{
+                    res.sendStatus(456);
+                }
+            });
+
             app.get('/listalluser', function(req,res){
                 var token = req.query.token;
                 if(token.length){
@@ -184,7 +240,17 @@ try{
                                         res.sendStatus(500);
                                     }
                                     else if(result2){
-                                        
+                                        query.updateUserOfProject(con, result2[0]['LAST_INSERT_ID()'], project_prop.UserList, (err, result3)=>{
+                                            if(err){
+                                                res.sendStatus(500);
+                                            }
+                                            else if(result3){
+                                                res.json({ProjectID:result3});
+                                            }
+                                            else{
+                                                res.sendStatus(500);
+                                            }
+                                        });
                                     }
                                     else{
                                         res.sendStatus(500);
@@ -344,6 +410,7 @@ try{
                                             else{
                                                 result2.forEach(element => {
                                                     delete element['SSHKey'];
+                                                    delete element['SessionToken'];
                                                 });
                                                 res.json(result2);
                                             }
@@ -362,6 +429,7 @@ try{
                                             }
                                             else{
                                                 result3.forEach(element => {
+                                                    delete element['SessionToken'];
                                                     delete element['SSHKey'];
                                                     delete element['UserID'];
                                                 });
@@ -370,6 +438,45 @@ try{
                                         }
                                     });
                                 }
+                            }
+                        });
+                    }
+                }
+                else{
+                    res.sendStatus(456);
+                }
+            });
+
+            app.get('/getconnect',function(req,res){
+                var token = req.query.token;
+                var instance_id = req.query.id;
+                if(token.length){
+                    if(token.split("@")[0]< new Date().getTime()){
+                        res.sendStatus(456);
+                    }
+                    else{
+                        query.getUserFromToken(con, token,(err,result)=>{
+                            if(err){
+                                res.sendStatus(500);
+                            }
+                            else if(result==null){
+                                res.sendStatus(401);
+                            }
+                            else{
+                                var user_id = result.UserID;
+                                query.getSSHtoken(con, user_id, instance_id,(err,result3)=>{
+                                    if (err) {
+                                        res.sendStatus(500);
+                                    }
+                                    else {
+                                        if(!result3.length){
+                                            res.sendStatus(500);
+                                        }
+                                        else{
+                                            res.send(result3);
+                                        }
+                                    }
+                                });
                             }
                         });
                     }

@@ -11,6 +11,15 @@
   transform: translate(-50%,-50%);
 }
 
+.ssh2{
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.ssh2:hover{
+  background-color: #9ea7af;
+}
+
 #main-container{
   margin-top: 10px;
   margin-left: 0px;

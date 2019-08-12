@@ -2,25 +2,33 @@ document.addEventListener("DOMContentLoaded", function () {
     getlistuser();
 
     $("#project-create-confirm").click(function(){
+        $('#project-create-alert').html("");
+        console.log('ok');
         project_users = [];
-        $('#list-user-data').find(':checked').forEach(element=>{
-            project_users.push(element.attr('user-id'));
+        $('#list-user-data').find(':checked').each((index,element)=>{
+            project_users.push(element.getAttribute('user-id'));
         });
-        if(!project_users.includes($("#project-create-manager").val())){
+        if($("#project-create-manager").val() && !project_users.includes($("#project-create-manager").val())){
             project_users.push($("#project-create-manager").val());
         }
-        var xhttp = new XMLHttpRequest();
-        xhttp.onloadend = function(){
-            noti(new Date().getTime(),"Success","Create project success");
-        };
-        xhttp.open("POST",  `http://localhost:8080/createproject?token=`+JSON.parse(document.cookie).token, true);
-        var data = JSON.stringify({
-            "ProjectName":$("#project-create-name").val(),
-            "CompanyName":$("#project-create-company").val(),
-            "ProjectManager":$("#project-create-manager").val(),
-            "UserList":project_users
-        });
-        xhttp.send(data);
+        if($("#project-create-manager").val()==""){
+            $('#project-create-alert').html("You should choose one project manager!");
+        }
+        else{
+            var xhttp = new XMLHttpRequest();
+            xhttp.onloadend = function(){
+                noti(new Date().getTime(),"Success","Create project success");
+            };
+            xhttp.open("POST",  `http://localhost:8080/createproject?token=`+JSON.parse(document.cookie).token, true);
+            var data = JSON.stringify({
+                "ProjectName":$("#project-create-name").val(),
+                "CompanyName":$("#project-create-company").val(),
+                "ProjectManager":$("#project-create-manager").val(),
+                "UserList":project_users
+            });
+            xhttp.setRequestHeader("Content-Type","application/json");
+            xhttp.send(data);
+        }
     });
 });
 

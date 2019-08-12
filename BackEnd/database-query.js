@@ -37,7 +37,7 @@ function updateInstance(con, instance_prop, callback) {
         if(change.length){
             con.query(`UPDATE Instances SET ${change.join(", ")} WHERE InstanceID=${instance_prop.InstanceID}`, function (err, result) {
                 if (err) {
-                    error_log_stream.write(time + "|Instance insert fail.\n");
+                    error_log_stream.write(time + "|Instance update fail.\n");
                     // con.end();
                     callback(err, null);
                     throw err;
@@ -196,7 +196,7 @@ function listProjects(con, user_id, callback) {
     //         throw err;
     //     }
     //     else {
-    con.query(`SELECT p.ProjectName, p.ProjectID FROM Projects_Users AS pu, Projects AS p WHERE (pu.UserID=${user_id} AND pu.ProjectID = p.ProjectID) OR (pu.UserID=${user_id} AND p.ProjectManager = p.ProjectID)`, function (err, result) {
+    con.query(`SELECT p.ProjectName, p.ProjectID FROM Projects_Users AS pu, Projects AS p WHERE (pu.UserID=${user_id} AND pu.ProjectID = p.ProjectID)`, function (err, result) {
         if (err) {
             error_log_stream.write(time + "|Get list project of user fail.\n");
             // con.end();
@@ -469,6 +469,26 @@ function isUserBelongProject(con, user_id, project_id, callback) {
     // });
 }
 
+function getSSHtoken(con, user_id, instance_id, callback){
+    var time = getTime();
+    if (!user_id || !instance_id) callback(401, null);
+    else {
+        var valid = new Date().getTime() + 300000;
+        var token = String(user_id + "@" + Math.random().toString(36).substring(2, 15) + "-" + valid);
+        con.query(`UPDATE Instances_Users SET SessionToken="${token}" WHERE InstanceID=${instance_id} AND UserID=${user_id}`, function(err,result){
+            if(err){
+                error_log_stream.write(time + "|Get ssh token fail.\n");
+                // con.end();
+                callback(err, null);
+                throw err;
+            }
+            else {
+                callback(null,token);
+            }
+        });
+    }
+}
+
 function isManagerInstance(con, user_id, instance_id, callback) {
     var time = getTime();
     // var con = await newCon();
@@ -514,17 +534,74 @@ function removeInstance(con, instance_id, callback) {
     //         throw err;
     //     }
     //     else {
-    con.query(`DELETE FROM Instances WHERE InstanceID=${instance_id}`, function (err, result) {
-        if (err) {
-            error_log_stream.write(time + "|Delete instance fail.\n");
+    con.query(`DELETE FROM Instances_Users WHERE InstanceID=${instance_id}`,(err,result)=>{
+        if(err){
+            error_log_stream.write(time + "|Delete instance relation user fail.\n");
             // con.end();
             callback(err, null);
             throw err;
         }
-        else {
-            callback(null, true);
+        else{
+            con.query(`DELETE FROM Instances WHERE InstanceID=${instance_id}`, function (err, result2) {
+                if (err) {
+                    error_log_stream.write(time + "|Delete instance fail.\n");
+                    // con.end();
+                    callback(err, null);
+                    throw err;
+                }
+                else {
+                    callback(null, true);
+                }
+            });
         }
     });
+    
+    //     }
+    // });
+}
+
+function removeProject(con, project_id, callback) {
+    var time = getTime();
+    // var con = await newCon();
+    // con.connect(function (err) {
+    //     if (err) {
+    //         // con.end();
+    //         callback(err, null);
+    //         throw err;
+    //     }
+    //     else {
+    con.query(`DELETE FROM Instances WHERE ProjectID=${project_id}`, function (err, result){
+        if(err){
+            error_log_stream.write(time + "|Clear project instance assigned.\n");
+            // con.end();
+            callback(err, null);
+            throw err;
+        }
+        else{
+            con.query(`DELETE FROM Projects_Users WHERE ProjectID=${project_id}`, function (err, result2) {
+                if(err){
+                    error_log_stream.write(time + "|Clear project user assigned.\n");
+                    // con.end();
+                    callback(err, null);
+                    throw err;
+                }
+                else{
+                    con.query(`DELETE FROM Projects WHERE ProjectID=${project_id}`, function (err, result3) {
+                        if (err) {
+                            error_log_stream.write(time + "|Delete project fail.\n");
+                            // con.end();
+                            callback(err, null);
+                            throw err;
+                        }
+                        else {
+                            callback(null, true);
+                        }
+                    });
+                }
+            });
+        }
+    });
+    
     //     }
     // });
 }
@@ -561,22 +638,36 @@ function updateUserOfProject(con, projec_id, users, callback){
             callback(err,null);
         }
         else if(result){
-            users.forEach(element => {
-                getUserDetail(con, element, (err,result2)=>{
-                    if(err){
-                        callback(err,null)   
-                    }
-                    else if(result2){
-                        con.query(`INSERT TABLE `);
-                    }
-                    else{
-
-                    }
-                });
+            con.query(`DELETE FROM Projects_Users WHERE ProjectID=${projec_id}`,(err,result2)=>{
+                if(err){
+                    error_log_stream.write(time + `|Clear all user of project ${project_id} fail.\n`);
+                    // con.end();
+                    callback(err, null);
+                    throw err;
+                }
+                else{
+                    users.forEach(element => {
+                        getUserDetail(con, element, (err,result3)=>{
+                            if(err){
+                                error_log_stream.write(time + `|Assign user for project ${project_id} fail.\n`);
+                                // con.end();
+                                callback(err, null);
+                                throw err;
+                            }
+                            else if(result3){
+                                con.query(`INSERT INTO Projects_Users (ProjectID, UserID) VALUES (${projec_id},${element})`);
+                            }
+                            else{
+                                callback(500,null);
+                            }
+                        });
+                    });
+                    callback(null,projec_id);
+                }
             });
         }
         else{
-            callback(null,null);
+            callback(500,null);
         }
     });
 }
@@ -606,5 +697,8 @@ module.exports = {
     updateInstance,
     isManagerInstance,
     removeInstance,
-    listAllUser
+    removeProject,
+    listAllUser,
+    updateUserOfProject,
+    getSSHtoken
 };  

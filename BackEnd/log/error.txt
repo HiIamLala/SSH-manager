@@ -15,3 +15,15 @@
 2019-8-8 16:27:2|Instance insert fail.
 2019-8-8 16:31:35|Instance insert fail.
 2019-8-8 16:32:28|Instance insert fail.
+2019-8-12 9:31:4|Project undefined insert fail.
+2019-8-12 9:34:16|Project undefined insert fail.
+2019-8-12 9:35:53|Get project detail fail.
+2019-8-12 9:38:32|Get project detail fail.
+2019-8-12 9:41:9|Get project detail fail.
+2019-8-12 9:41:45|Get project detail fail.
+2019-8-12 9:42:27|Get project detail fail.
+2019-8-12 9:43:48|Get project detail fail.
+2019-8-12 10:12:20|Delete project fail.
+2019-8-12 14:24:34|Delete instance fail.
+2019-8-12 14:44:28|Delete project fail.
+2019-8-12 15:58:26|Get ssh token fail.

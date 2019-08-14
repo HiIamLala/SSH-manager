@@ -38,6 +38,40 @@ app.get('/listalluser', function (req, res) {
     xhttp.send();
 });
 
+app.get('/listinstanceuser', function (req, res) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function () {
+        if (this.status == 200) {
+            res.send(this.responseText);
+        }
+        else if (this.status == 0){
+            res.sendStatus(500);
+        }
+        else {
+            res.sendStatus(this.status);
+        }
+    }
+    xhttp.open("GET",  `http://${backend_url}${req.originalUrl}`, true);
+    xhttp.send();
+});
+
+app.get('/listprojectuser', function (req, res) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function () {
+        if (this.status == 200) {
+            res.send(this.responseText);
+        }
+        else if (this.status == 0){
+            res.sendStatus(500);
+        }
+        else {
+            res.sendStatus(this.status);
+        }
+    }
+    xhttp.open("GET",  `http://${backend_url}${req.originalUrl}`, true);
+    xhttp.send();
+});
+
 app.get('/listprojects', function (req, res) {
     var xhttp = new XMLHttpRequest();
     xhttp.onloadend = function () {

@@ -46,8 +46,34 @@ function updateInstance(con, instance_prop, callback) {
                     callback(null, "Instance change saved");
                 }
             });
-        }else{
-            callback(null,null);
+        }
+        else{
+            if (instance_prop.Users) {
+                con.query(`DELETE FROM Instances_Users WHERE InstanceID=${instance_prop.InstanceID}`,(err,result)=>{
+                    if(err){
+                        callback(err,null);
+                    }
+                    else{
+                        alert = null;
+                        instance_prop.Users.forEach(element=>{
+                            con.query(`INSERT INTO Instances_Users (InstanceID,UserID) VALUES (${instance_prop.InstanceID},${element})`,(err,result)=>{
+                                if(err){
+                                    alert = err;
+                                }
+                            });
+                        });
+                        if(alert){
+                            callback(err,null);
+                        }
+                        else{
+                            callback(null,"Instance change saved");
+                        }
+                    }
+                });
+            }
+            else{
+                callback(null,null);
+            }
         }
         //     }
         // });
@@ -222,38 +248,43 @@ function getProjectDetail(con, project_id, callback) {
     //         throw err;
     //     }
     //     else {
-    con.query(`SELECT * FROM Projects WHERE ProjectID=${project_id}`, function (err, result) {
-        if (err) {
-            error_log_stream.write(time + "|Get project detail fail.\n");
-            // con.end();
-            callback(err, null);
-            throw err;
-        }
-        else if (result) {
-            if (result[0].ProjectManager == null) {
-                result[0].ProjectManagerName = "Not defined";
-                callback(null, result);
+    if(Number.isInteger(Number(project_id))){
+        con.query(`SELECT * FROM Projects WHERE ProjectID=${project_id}`, function (err, result) {
+            if (err) {
+                error_log_stream.write(time + "|Get project detail fail.\n");
+                // con.end();
+                callback(err, null);
+                throw err;
+            }
+            else if (result) {
+                if (result[0].ProjectManager == null) {
+                    result[0].ProjectManagerName = "Not defined";
+                    callback(null, result);
+                }
+                else {
+                    con.query(`SELECT UserName FROM Users WHERE UserID=${result[0].ProjectManager}`, function (err, res) {
+                        if (err) {
+                            error_log_stream.write(time + "|Get user detail fail.\n");
+                            // con.end();
+                            callback(err, null);
+                            throw err;
+                        }
+                        else {
+                            // con.end();
+                            result[0].ProjectManagerName = res[0].UserName;
+                            callback(null, result);
+                        }
+                    });
+                }
             }
             else {
-                con.query(`SELECT UserName FROM Users WHERE UserID=${result[0].ProjectManager}`, function (err, res) {
-                    if (err) {
-                        error_log_stream.write(time + "|Get user detail fail.\n");
-                        // con.end();
-                        callback(err, null);
-                        throw err;
-                    }
-                    else {
-                        // con.end();
-                        result[0].ProjectManagerName = res[0].UserName;
-                        callback(null, result);
-                    }
-                });
+                callback(null, result);
             }
-        }
-        else {
-            callback(null, result);
-        }
-    });
+        });
+    }
+    else{
+        callback(401,null);
+    }
     //     }
     // });
 }
@@ -672,6 +703,34 @@ function updateUserOfProject(con, projec_id, users, callback){
     });
 }
 
+function getUserofInstance(con, instance_id, callback){
+    var time = getTime();
+    con.query(`SELECT u.UserID, u.UserName FROM Users AS u, Instances_Users AS iu WHERE u.UserID=iu.UserID AND iu.InstanceID=${instance_id}`, function (err, result) {
+        if (err) {
+            error_log_stream.write(time + "|List all user fail.\n");
+            callback(err, null);
+            throw err;
+        }
+        else {
+            callback(null, result);
+        }
+    });
+}
+
+function getUserofProject(con, project_id, callback){
+    var time = getTime();
+    con.query(`SELECT u.UserID, u.UserName FROM Users AS u, Projects_Users AS pu WHERE u.UserID=pu.UserID AND pu.ProjectID=${project_id}`, function (err, result) {
+        if (err) {
+            error_log_stream.write(time + "|List all user fail.\n");
+            callback(err, null);
+            throw err;
+        }
+        else {
+            callback(null, result);
+        }
+    });
+}
+
 function getTime() {
     var today = new Date();
     var date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
@@ -700,5 +759,7 @@ module.exports = {
     removeProject,
     listAllUser,
     updateUserOfProject,
-    getSSHtoken
+    getSSHtoken,
+    getUserofInstance,
+    getUserofProject
 };  

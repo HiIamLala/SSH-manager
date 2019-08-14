@@ -3,7 +3,52 @@ var ManagerID;
 
 document.addEventListener("DOMContentLoaded", function () {
     main_container = document.getElementById("main-container");
-    initProjectDetail(initProjectInstances);
+    initProjectDetail(()=>{
+        initProjectInstances();
+        getlistuserofproject(parseURLParams(window.location.href).id);
+        $("#instance-edit-confirm").click(function () {
+            instance_users = [];
+            $('#instance-list-user-data').find(':checked').each((index,element)=>{
+                instance_users.push(element.getAttribute('user-id'));
+            });
+            var data = JSON.stringify({"Users": instance_users, "InstanceID": $("#instance-edit-id").val(), "InstanceName": $("#instance-edit-name").val(), "ARN": $("#instance-edit-arn").val(), "IpAddress": $("#instance-edit-ip").val(), "InstanceUser": $("#instance-edit-user").val() });
+            var xhttp = new XMLHttpRequest();
+            xhttp.onloadend = function () {
+                if (this.status == 200) {
+                    $("#instance-edit-confirm").attr("disabled", true);
+                    $("#instance-edit-confirm").css("opacity", "0.2");
+                    $("#instance-edit").css("display", "none");
+                    noti(new Date().getTime(),"Success",`Instance ID ${$("#instance-edit-id").val()} change`);
+                    initProjectInstances();
+                }
+                else if(this.status == 456) {
+                    window.location.replace("/login");
+                }
+                else if (this.status == 403) {
+                    $("#instance-edit-confirm").attr("disabled", true);
+                    $("#instance-edit-confirm").css("opacity", "1");
+                    $("#instance-edit-confirm").html("You don't have permisstion");
+                    $("#instance-edit-confirm").removeClass("btn-success").addClass("btn-danger");
+                }
+                else if(this.status == 400){
+                    $("#instance-edit-confirm").attr("disabled", true);
+                    $("#instance-edit-confirm").css("opacity", "1");
+                    $("#instance-edit-confirm").html("Bad Request");
+                    $("#instance-edit-confirm").removeClass("btn-success").addClass("btn-danger");
+                } 
+                else
+                {
+                    $("#instance-edit-confirm").attr("disabled", true);
+                    $("#instance-edit-confirm").css("opacity", "1");
+                    $("#instance-edit-confirm").html("Server Error");
+                    $("#instance-edit-confirm").removeClass("btn-success").addClass("btn-danger");
+                }
+            };
+            xhttp.open("POST", `http://localhost:8080/updateinstance?token=${JSON.parse(document.cookie).token}`, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            xhttp.send(data);
+        });
+    });
 });
 
 function initProjectDetail(callback) {
@@ -66,7 +111,7 @@ function initProjectDetail(callback) {
 }
 
 function initProjectInstances() {
-    if(JSON.parse(document.cookie).IsAdmin){
+    if(JSON.parse(document.cookie).IsAdmin || ManagerID==JSON.parse(document.cookie).UserID){
         $('#create-instance-container').html(`
         <div class="collapse" id="collapseExample">
             <div class="card card-body">
@@ -313,6 +358,10 @@ function CreateTableFromJSON(myBooks, divContainer) {
                     edit_butt.setAttribute("instance-id", myBooks[i].InstanceID);
                     edit_butt.innerHTML = "Edit";
                     edit_butt.onclick = function () {
+                        $('#instance-list-user-data').find(':checkbox').each((index,element)=>{
+                            element.checked = false;
+                        });
+                        getlistuserofinstance(this.getAttribute('instance-id'));
                         $("#instance-edit").css("display", "block");
                         $("#instance-edit-id").val(this.getAttribute("instance-id"));
                         $("#instance-edit-confirm").attr("disabled", false);
@@ -320,44 +369,6 @@ function CreateTableFromJSON(myBooks, divContainer) {
                         $("#instance-edit-confirm").html("Confirm");
                         $("#instance-edit-confirm").removeClass("btn-danger").addClass("btn-success");
                     };
-                    $("#instance-edit-confirm").click(function () {
-                        var data = JSON.stringify({ "InstanceID": $("#instance-edit-id").val(), "InstanceName": $("#instance-edit-name").val(), "ARN": $("#instance-edit-arn").val(), "IpAddress": $("#instance-edit-ip").val(), "InstanceUser": $("#instance-edit-user").val() });
-                        var xhttp = new XMLHttpRequest();
-                        xhttp.onloadend = function () {
-                            if (this.status == 200) {
-                                $("#instance-edit-confirm").attr("disabled", true);
-                                $("#instance-edit-confirm").css("opacity", "0.2");
-                                $("#instance-edit").css("display", "none");
-                                noti(new Date().getTime(),"Success",`Instance ID ${$("#instance-edit-id").val()} change`);
-                                initProjectInstances();
-                            }
-                            else if(this.status == 456) {
-                                window.location.replace("/login");
-                            }
-                            else if (this.status == 403) {
-                                $("#instance-edit-confirm").attr("disabled", true);
-                                $("#instance-edit-confirm").css("opacity", "1");
-                                $("#instance-edit-confirm").html("You don't have permisstion");
-                                $("#instance-edit-confirm").removeClass("btn-success").addClass("btn-danger");
-                            }
-                            else if(this.status == 400){
-                                $("#instance-edit-confirm").attr("disabled", true);
-                                $("#instance-edit-confirm").css("opacity", "1");
-                                $("#instance-edit-confirm").html("Bad Request");
-                                $("#instance-edit-confirm").removeClass("btn-success").addClass("btn-danger");
-                            } 
-                            else
-                            {
-                                $("#instance-edit-confirm").attr("disabled", true);
-                                $("#instance-edit-confirm").css("opacity", "1");
-                                $("#instance-edit-confirm").html("Server Error");
-                                $("#instance-edit-confirm").removeClass("btn-success").addClass("btn-danger");
-                            }
-                        };
-                        xhttp.open("POST", `http://localhost:8080/updateinstance?token=${JSON.parse(document.cookie).token}`, true);
-                        xhttp.setRequestHeader("Content-Type", "application/json");
-                        xhttp.send(data);
-                    });
                     tabCell.appendChild(edit_butt);
                 }
             }
@@ -387,4 +398,57 @@ function noti(id, header, content) {
     );
     $(`#${id}`).toast({delay:3600000});
     $(`#${id}`).toast("show");
+}
+
+function getlistuserofproject(project_id){
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function(){
+        if(this.status==200 && this.responseText) {
+            function createUser(user_id,user_name){
+                $("#project-list-user-data").append(`
+                <a class="list-wrap user-li" href="/user?id=${user_id}">
+                    ${user_name}
+                </a>`
+                );
+                $("#instance-list-user-data").append(`
+                <span class="list-wrap">
+                    <input type="checkbox" id="user-${user_id}" user-id="${user_id}"/>
+                    <label for="user-${user_id}" class="list">
+                        <i class="fa fa-check"></i>
+                    ${user_name}
+                    </label>
+                </span>`
+                );
+            }
+            data = JSON.parse(this.responseText);
+            data.forEach(element => {
+                createUser(element.UserID,element.UserName);
+            });
+        }
+        else if(this.status==456){
+            window.location.replace("/login");
+        }
+    };
+    xhttp.open("GET",  `http://localhost:8080/listprojectuser?id=${project_id}&token=`+JSON.parse(document.cookie).token, true);
+    xhttp.send();
+}
+
+function getlistuserofinstance(instance_id){
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function(){
+        if(this.status==200 && this.responseText) {
+            function checkUser(user_id){
+                $(`#user-${user_id}`).prop('checked', true);
+            }
+            data = JSON.parse(this.responseText);
+            data.forEach(element => {
+                checkUser(element.UserID);
+            });
+        }
+        else if(this.status==456){
+            window.location.replace("/login");
+        }
+    };
+    xhttp.open("GET",  `http://localhost:8080/listinstanceuser?id=${instance_id}&token=${JSON.parse(document.cookie).token}`, true);
+    xhttp.send();
 }

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>SSH Management</title>
+    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.1.0/css/font-awesome.min.css'>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
         integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous">
     </script>
@@ -60,53 +61,75 @@
         </div>
     </nav>
     <div id="project-data">
-        <span class="pad-proj">Project Name: 
+        <span class="pad-proj">Project Name:
             <strong></strong>
         </span>
-        <span class="pad-proj">Company Name: 
+        <span class="pad-proj">Company Name:
             <strong></strong>
         </span>
-        <span class="pad-proj">Project manager: 
+        <span class="pad-proj">Project manager:
             <strong></strong>
         </span>
     </div>
 
     <hr>
     <div id="main-container">
-        <div id="project-instances-data"></div>
-        <hr>
-        <div id="create-instance-container"></div>
-    </div>
-    <div id="noti-holder" style="position:fixed;right:10px;top:60px;"></div>
-    <div id="instance-edit" style="display: none">
-        <form>
-            <h1 style="text-align: center;padding-bottom: 20px">Instance Modify</h1>
-            <div class="form-group">
-                <label for="instance-edit-id">Instance ID:</label>
-                <input type="number" class="form-control input-group-text" disabled id="instance-edit-id">
+        <div class="row" style="margin:0px !important; height: 100%;">
+            <div class="col-10">
+                <div id="project-instances-data"></div>
+                <hr>
+                <div id="create-instance-container"></div>
             </div>
-            <div class="form-group">
-                <label for="instance-edit-name">Instance Name</label>
-                <input type="text" class="form-control input-group-text" id="instance-edit-name" placeholder="Instance name">
+            <div class="col-2 right-panel">
+                <h1 style="text-align: center; color:#DDD; padding: 20px">Project Dev List</h1>
+                <hr>
+                <div id="project-list-user-data">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="instance-edit-arn">Instance ARN</label>
-                <input type="text" class="form-control input-group-text" id="instance-edit-arn" placeholder="Instance ARN">
+        </div>
+        <div id="noti-holder" style="position:fixed;right:10px;top:60px;"></div>
+        <div id="instance-edit" style="display: none; width:60%">
+            <div class="row" style="margin:0px !important; height: 100%;">
+                <div class="col-8">
+                    <form>
+                        <h1 style="text-align: center;padding-bottom: 20px">Instance Modify</h1>
+                        <div class="form-group">
+                            <label for="instance-edit-id">Instance ID:</label>
+                            <input type="number" class="form-control input-group-text" disabled id="instance-edit-id">
+                        </div>
+                        <div class="form-group">
+                            <label for="instance-edit-name">Instance Name</label>
+                            <input type="text" class="form-control input-group-text" id="instance-edit-name"
+                                placeholder="Instance name">
+                        </div>
+                        <div class="form-group">
+                            <label for="instance-edit-arn">Instance ARN</label>
+                            <input type="text" class="form-control input-group-text" id="instance-edit-arn"
+                                placeholder="Instance ARN">
+                        </div>
+                        <div class="form-group">
+                            <label for="instance-edit-user">Instance IP Address</label>
+                            <input type="text" class="form-control input-group-text" id="instance-edit-ip"
+                                placeholder="Instance IP">
+                        </div>
+                        <div class="form-group">
+                            <label for="instance-edit-user">Instance User (for SSH)</label>
+                            <input type="text" class="form-control input-group-text" id="instance-edit-user"
+                                placeholder="Instance User">
+                        </div>
+                        <button type="button" class="btn btn-success" style="margin-top: 20px"
+                            id="instance-edit-confirm">Confirm</button>
+                        <button type="reset" class="btn btn-outline-dark" style="margin-top: 20px"
+                            onclick='{$("#instance-edit").css("display","none");}'>Cancel</button>
+                    </form>
+                </div>
+                <div class="col-4 instance-edit-dev">
+                    <h1 style="text-align: center; color:#DDD; padding: 20px">User List</h1>
+                    <hr>
+                    <div id="instance-list-user-data">
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="instance-edit-user">Instance IP Address</label>
-                <input type="text" class="form-control input-group-text" id="instance-edit-ip" placeholder="Instance IP">
-            </div>
-            <div class="form-group">
-                <label for="instance-edit-user">Instance User (for SSH)</label>
-                <input type="text" class="form-control input-group-text" id="instance-edit-user" placeholder="Instance User">
-            </div>
-            <button type="button" class="btn btn-success" style="margin-top: 20px"
-                id="instance-edit-confirm">Confirm</button>
-            <button type="reset" class="btn btn-outline-dark" style="margin-top: 20px"
-                onclick='{$("#instance-edit").css("display","none");}'>Cancel</button>
-        </form>
-    </div>
 </body>
 
 </html>

@@ -12,7 +12,7 @@ $("#login-butt").on("click", function () {
                 document.cookie = this.responseText;
                 window.location.replace("/");
             }
-            else if(this.status == 404){
+            else if(this.status == 500){
                 $("#notification").html("Server drown... ax ax blob blob");
             }
             else{

@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
     getlistuser();
-
     $("#project-create-confirm").click(function(){
         $('#project-create-alert').html("");
         console.log('ok');
@@ -17,7 +16,10 @@ document.addEventListener("DOMContentLoaded", function () {
         else{
             var xhttp = new XMLHttpRequest();
             xhttp.onloadend = function(){
-                noti(new Date().getTime(),"Success","Create project success");
+                if(this.status == 200){       
+                    noti(new Date().getTime(),"Success","Create project success<br>Auto redirect in 2s");
+                    window.location.replace("http://localhost:8080/project?id="+JSON.parse(this.responseText).ProjectID);
+                }
             };
             xhttp.open("POST",  `http://localhost:8080/createproject?token=`+JSON.parse(document.cookie).token, true);
             var data = JSON.stringify({

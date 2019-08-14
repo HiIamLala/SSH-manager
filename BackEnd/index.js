@@ -66,7 +66,7 @@ try{
                                         if(err){
                                             res.sendStatus(500);
                                         }
-                                        else if(result3.ProjectManager === user_id){
+                                        else if(result3[0].ProjectManager === user_id){
                                             query.removeProject(con, project_id, (err,result4)=>{
                                                 if(err){
                                                     res.sendStatus(500);
@@ -300,15 +300,18 @@ try{
                                 else{
                                     if(query.isManagerInstance(con, user_id,req.body.InstanceID,(err,result3)=>{
                                         if(err){
-                                            res.sendStatus(500)
+                                            res.sendStatus(500);
                                         }
                                         else if(result3){
                                             query.updateInstance(con, req.body,(err,result2)=>{
                                                 if(err){
-                                                    res.sendStatus(500)
+                                                    res.sendStatus(500);
+                                                }
+                                                else if(result2){
+                                                    res.sendStatus(200);
                                                 }
                                                 else{
-                                                    res.sendStatus(200);
+                                                    res.sendStatus(400);
                                                 }
                                             });
                                         }
@@ -569,6 +572,110 @@ try{
                         res.json(result);
                     }
                 });
+            });
+
+            app.get('/listinstanceuser', function(req,res){
+                var token = req.query.token;
+                if(token.length){
+                    if(token.split("@")[0] < new Date().getTime()){
+                        res.sendStatus(456);
+                    }
+                    else{
+                        query.getUserFromToken(con, token,(err, result) => {
+                            if(err){
+                                res.sendStatus(500);
+                            }
+                            else if(result==null){
+                                res.sendStatus(401);
+                            }
+                            else if(result.IsAdmin){
+                                query.getUserofInstance(con, req.query.id, (err,result2)=>{
+                                    if(err){
+                                        res.sendStatus(500);
+                                    }
+                                    else{
+                                        res.json(result2);
+                                    }
+                                });
+                            }
+                            else{
+                                query.isManagerInstance(con, result.UserID, req.query.id, (err,result3)=>{
+                                    if(err){
+                                        res.sendStatus(500);
+                                    }
+                                    else if(result3){
+                                        query.getUserofInstance(con, req.query.id, (err,result4)=>{
+                                            if(err){
+                                                res.sendStatus(500);
+                                            }
+                                            else{
+                                                res.json(result4);
+                                            }
+                                        });
+                                    }
+                                    else{
+                                        res.sendStatus(403);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                }
+                else{
+                    res.sendStatus(456);
+                }
+            });
+
+            app.get('/listprojectuser', function(req,res){
+                var token = req.query.token;
+                if(token.length){
+                    if(token.split("@")[0] < new Date().getTime()){
+                        res.sendStatus(456);
+                    }
+                    else{
+                        query.getUserFromToken(con, token,(err, result) => {
+                            if(err){
+                                res.sendStatus(500);
+                            }
+                            else if(result==null){
+                                res.sendStatus(401);
+                            }
+                            else if(result.IsAdmin){
+                                query.getUserofProject(con, req.query.id, (err,result2)=>{
+                                    if(err){
+                                        res.sendStatus(500);
+                                    }
+                                    else{
+                                        res.json(result2);
+                                    }
+                                });
+                            }
+                            else{
+                                query.isUserBelongProject(con, result.UserID, req.query.id, (err,result3)=>{
+                                    if(err){
+                                        res.sendStatus(500);
+                                    }
+                                    else if(result3){
+                                        query.getUserofProject(con, req.query.id, (err,result4)=>{
+                                            if(err){
+                                                res.sendStatus(500);
+                                            }
+                                            else{
+                                                res.json(result4);
+                                            }
+                                        });
+                                    }
+                                    else{
+                                        res.sendStatus(403);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                }
+                else{
+                    res.sendStatus(456);
+                }
             });
 
             app.listen(port, () => console.log(`Example app listening on port ${port}!`));

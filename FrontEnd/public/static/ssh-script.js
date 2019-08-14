@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", function(){
     socket.emit("setupconnection",JSON.stringify(parseURLParams(window.location.href)));
     socket.on('connect', function () {
         term.write('\r\n*** Connected to backend***\r\n');
+        term.fit();
         socket.emit('setsize',{rows:term.rows,cols:term.cols});
         
         // Browser -> Backend
@@ -28,6 +29,7 @@ document.addEventListener("DOMContentLoaded", function(){
     
         socket.on('disconnect', function () {
             term.write('\r\n*** Disconnected from backend***\r\n');
+            window.close();
         });
     });
 });

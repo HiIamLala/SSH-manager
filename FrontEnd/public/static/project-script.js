@@ -319,7 +319,7 @@ function CreateTableFromJSON(myBooks, divContainer) {
                 ssh_group.appendChild(ssh2_butt);
                 ssh_group.appendChild(ssh2_opt);
                 tabCell.appendChild(ssh_group);
-                if (JSON.parse(document.cookie).IsAdmin) {
+                if (JSON.parse(document.cookie).IsAdmin || JSON.parse(document.cookie).UserID==ManagerID) {
                     var delete_butt = document.createElement('button');
                     delete_butt.classList.add('btn', 'btn-outline-danger');
                     delete_butt.setAttribute("instance-id", myBooks[i].InstanceID);
@@ -396,7 +396,7 @@ function noti(id, header, content) {
         </div>
     </div>`
     );
-    $(`#${id}`).toast({delay:3600000});
+    $(`#${id}`).toast({delay:10000});
     $(`#${id}`).toast("show");
 }
 

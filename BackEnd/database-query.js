@@ -55,19 +55,32 @@ function updateInstance(con, instance_prop, callback) {
                     }
                     else{
                         alert = null;
-                        instance_prop.Users.forEach(element=>{
-                            con.query(`INSERT INTO Instances_Users (InstanceID,UserID) VALUES (${instance_prop.InstanceID},${element})`,(err,result)=>{
-                                if(err){
-                                    alert = err;
+                        getInstanceManager(con, instance_prop.InstanceID, (err,result2)=>{
+                            if(err){
+                                callback(err,null);
+                            }
+                            else if(result2){
+                                if(!instance_prop.Users.includes(result2.ProjectManager)){
+                                    instance_prop.Users.push(result2.ProjectManager);
                                 }
-                            });
+                                instance_prop.Users.forEach(element=>{
+                                    con.query(`INSERT INTO Instances_Users (InstanceID,UserID) VALUES (${instance_prop.InstanceID},${element})`,(err,result)=>{
+                                        if(err){
+                                            alert = err;
+                                        }
+                                    });
+                                });
+                                if(alert){
+                                    callback(err,null);
+                                }
+                                else{
+                                    callback(null,"Instance change saved");
+                                }
+                            }
+                            else{
+                                callback(null,null);
+                            }
                         });
-                        if(alert){
-                            callback(err,null);
-                        }
-                        else{
-                            callback(null,"Instance change saved");
-                        }
                     }
                 });
             }
@@ -272,13 +285,13 @@ function getProjectDetail(con, project_id, callback) {
                         else {
                             // con.end();
                             result[0].ProjectManagerName = res[0].UserName;
-                            callback(null, result);
+                            callback(null, result[0]);
                         }
                     });
                 }
             }
             else {
-                callback(null, result);
+                callback(null, null);
             }
         });
     }
@@ -325,18 +338,44 @@ function listProjectInstancesAvail(con, user_id, project_id, callback) {
     //         throw err;
     //     }
     //     else {
-    con.query(`SELECT * FROM Instances AS i, Instances_Users as iu WHERE i.ProjectID=${project_id} AND i.InstanceID=iu.InstanceID AND iu.UserID=${user_id}`, function (err, result) {
-        if (err) {
+    getProjectDetail(con, project_id, (err,result)=>{
+        if(err){
             error_log_stream.write(time + "|Get project instances fail.\n");
             // con.end();
             callback(err, null);
             throw err;
         }
-        else {
-            // con.end();
-            callback(null, result);
+        else if(result){
+            if(result.ProjectManager==user_id){
+                listProjectInstances(con,project_id,(err,result2)=>{
+                    if(err){
+                        error_log_stream.write(time + "|Get project instances fail.\n");
+                        // con.end();
+                        callback(err, null);
+                        throw err;
+                    }
+                    callback(null, result2);
+                });
+            }
+            else{
+                con.query(`SELECT * FROM Instances AS i, Instances_Users as iu WHERE i.ProjectID=${project_id} AND i.InstanceID=iu.InstanceID AND iu.UserID=${user_id}`, function (err, result) {
+                    if (err) {
+                        error_log_stream.write(time + "|Get project instances fail.\n");
+                        // con.end();
+                        callback(err, null);
+                        throw err;
+                    }
+                    else {
+                        // con.end();
+                        callback(null, result);
+                    }
+                });
+            }
         }
-    });
+        else{
+            callback(null,null);
+        }
+    })
     //     }
     // });
 }
@@ -555,6 +594,30 @@ function isManagerInstance(con, user_id, instance_id, callback) {
     }
 }
 
+function isManagerProject(con, user_id, project_id, callback) {
+    var time = getTime();
+    // var con = await newCon();
+    if (!user_id || !project_id) callback(401, null);
+    else {
+        getProjectDetail(con, project_id, (err,result)=>{
+            if(err){
+                callback(err, null);
+            }
+            else if(result){
+                if(result.ProjectManager==user_id){
+                    callback(null,true);
+                }
+                else{
+                    callback(null,false);
+                }
+            }
+            else{
+                callback(400,null);
+            }
+        });
+    }
+}
+
 function removeInstance(con, instance_id, callback) {
     var time = getTime();
     // var con = await newCon();
@@ -677,6 +740,9 @@ function updateUserOfProject(con, projec_id, users, callback){
                     throw err;
                 }
                 else{
+                    if(!users.includes(result.ProjectManager)){
+                        users.push(result.ProjectManager);
+                    }
                     users.forEach(element => {
                         getUserDetail(con, element, (err,result3)=>{
                             if(err){
@@ -707,7 +773,7 @@ function getUserofInstance(con, instance_id, callback){
     var time = getTime();
     con.query(`SELECT u.UserID, u.UserName FROM Users AS u, Instances_Users AS iu WHERE u.UserID=iu.UserID AND iu.InstanceID=${instance_id}`, function (err, result) {
         if (err) {
-            error_log_stream.write(time + "|List all user fail.\n");
+            error_log_stream.write(time + "|List all user of instance fail.\n");
             callback(err, null);
             throw err;
         }
@@ -717,11 +783,28 @@ function getUserofInstance(con, instance_id, callback){
     });
 }
 
+function getInstanceManager(con, instance_id, callback){
+    var time = getTime();
+    con.query(`SELECT p.ProjectManager FROM Projects AS p, Instances AS i WHERE p.ProjectID=i.ProjectID AND i.InstanceID=${instance_id}`, function (err, result) {
+        if (err) {
+            error_log_stream.write(time + "|List all user of instance fail.\n");
+            callback(err, null);
+            throw err;
+        }
+        else if(result){
+            callback(null, result[0]);
+        }
+        else {
+            callback(null,null);
+        }
+    });
+}
+
 function getUserofProject(con, project_id, callback){
     var time = getTime();
     con.query(`SELECT u.UserID, u.UserName FROM Users AS u, Projects_Users AS pu WHERE u.UserID=pu.UserID AND pu.ProjectID=${project_id}`, function (err, result) {
         if (err) {
-            error_log_stream.write(time + "|List all user fail.\n");
+            error_log_stream.write(time + "|List all user of project fail.\n");
             callback(err, null);
             throw err;
         }
@@ -755,11 +838,13 @@ module.exports = {
     listProjectInstancesAvail,
     updateInstance,
     isManagerInstance,
+    isManagerProject,
     removeInstance,
     removeProject,
     listAllUser,
     updateUserOfProject,
     getSSHtoken,
     getUserofInstance,
-    getUserofProject
+    getUserofProject,
+    getInstanceManager
 };  

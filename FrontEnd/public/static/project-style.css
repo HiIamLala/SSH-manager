@@ -46,6 +46,8 @@
 
 body {
   background-color: #C2CAD0;
+  overflow-y: scroll;
+  overflow-x: auto;
 }
 
 .pad-proj{
@@ -328,4 +330,27 @@ input[type="checkbox"] {
   background-color: #343a40;
   right: 0px;
   color: #DDD;
+}
+
+.project-list-user-edit{
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+  margin: 0px;
+  bottom: 0px;
+  position: fixed;
+  min-width: 189px;
+  width: 16.666667%;
+  right: 0px;
+}
+
+
+#project-list-user-edit{
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+  margin: 0px;
+  bottom: 0px;
+  position: fixed;
+  min-width: 189px;
+  width: 16.666667%;
+  right: 0px;
 }

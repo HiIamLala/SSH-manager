@@ -176,6 +176,25 @@ app.post('/updateinstance',function (req, res) {
     xhttp.send(formData);
 });
 
+app.post('/updateprojectuser',function (req, res) {
+    var xhttp = new XMLHttpRequest();
+    var formData = JSON.stringify(req.body);
+    xhttp.onloadend = function () {
+        if (this.status == 200) {
+            res.send(this.responseText);
+        }
+        else if (this.status == 0){
+            res.sendStatus(500);
+        }
+        else {
+            res.sendStatus(this.status);
+        }
+    }
+    xhttp.open("POST",  `http://${backend_url}${req.originalUrl}`, true);
+    xhttp.setRequestHeader("Content-Type","application/json");
+    xhttp.send(formData);
+});
+
 app.post('/createproject',function (req, res) {
     var xhttp = new XMLHttpRequest();
     var formData = JSON.stringify(req.body);

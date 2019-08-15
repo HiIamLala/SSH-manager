@@ -48,11 +48,57 @@ document.addEventListener("DOMContentLoaded", function () {
             xhttp.setRequestHeader("Content-Type", "application/json");
             xhttp.send(data);
         });
+        $('#project-list-user-footer').attr("project-id",parseURLParams(window.location.href).id);
+        $('#project-list-user-footer').append(`<button type="button" class="btn btn-light" id="project-list-user-edit">Modify Member List</button>`);
+        $('#project-list-user-footer').append(`
+            <div id="project-list-user-editing" style="display:none">
+                <button type="button" class="btn btn-success" id="project-list-user-confirm">Confirm</button>
+                <button type="button" class="btn btn-outline-light" id="project-list-user-cancel" style="right:0px;position:absolute;">Cancel</button>
+            </div>`
+        );
+        $('#project-list-user-edit').click(function(){
+            $('#project-list-user-edit').css('display',"none");
+            $('#project-list-user-editing').css('display',"block");
+            getlistuser(parseURLParams(window.location.href).id);
+        });
+        $('#project-list-user-cancel').click(function(){
+            $('#project-list-user-editing').css('display',"none");
+            $('#project-list-user-edit').css('display',"block");
+            getlistuserofproject(parseURLParams(window.location.href).id);
+        });
+        $('#project-list-user-confirm').click(function(){
+            project_users = [];
+            $('#project-list-user-data').find(':checked').each((index,element)=>{
+                project_users.push(element.getAttribute('user-id'));
+            });
+            var xhttp = new XMLHttpRequest();
+            var formData = JSON.stringify({"Users":project_users});
+            xhttp.onloadend = function () {
+                if (this.status == 200) {
+                    noti(new Date().getTime(),"Success","Update member of project success");
+                }
+                else if(this.status == 403){
+                    noti(new Date().getTime(),"Forbidden","You don't have permission");
+                }
+                else if(this.status == 400){
+                    noti(new Date().getTime(),"Fail","Bad request");
+                }
+                else {
+                    noti(new Date().getTime(),"Fail","Update member of project fail");
+                }
+                $('#project-list-user-editing').css('display',"none");
+                $('#project-list-user-edit').css('display',"block");
+                getlistuserofproject(parseURLParams(window.location.href).id);
+            }
+            xhttp.open("POST",  `http://localhost:8080/updateprojectuser?id=${parseURLParams(window.location.href).id}&token=${JSON.parse(document.cookie).token}`, true);
+            xhttp.setRequestHeader("Content-Type","application/json");
+            xhttp.send(formData);
+        });
     });
 });
 
 function initProjectDetail(callback) {
-    var projec_id = parseURLParams(window.location.href).id;
+    var project_id = parseURLParams(window.location.href).id;
     var xhttp = new XMLHttpRequest();
     xhttp.onloadend = function () {
         if (this.status == 200) {
@@ -61,41 +107,47 @@ function initProjectDetail(callback) {
             container.innerHTML="";
             var project_name = document.createElement('span');
             project_name.classList.add('pad-proj');
-            project_name.innerHTML = "Project Name: <strong>" + result[0].ProjectName + "</strong>";
+            project_name.innerHTML = "Project Name: <strong>" + result.ProjectName + "</strong>";
             container.appendChild(project_name);
             var project_company = document.createElement('span');
-            project_company.innerHTML = "Company Name: <strong>" + result[0].CompanyName + "</strong>";
+            project_company.innerHTML = "Company Name: <strong>" + result.CompanyName + "</strong>";
             project_company.classList.add('pad-proj');
             container.appendChild(project_company);
             var project_manager = document.createElement('span');
-            ManagerID = result[0].ProjectManager;
+            ManagerID = result.ProjectManager;
             function check(){
                 if(ManagerID==JSON.parse(document.cookie).UserID) return "(YOU)";
                 else return "";
             }
-            project_manager.innerHTML = "Project manager: <strong>" + result[0].ProjectManagerName + " " + check() + "</strong>";
+            project_manager.innerHTML = "Project manager: <strong>" + result.ProjectManagerName + " " + check() + "</strong>";
             project_manager.classList.add('pad-proj');
             container.appendChild(project_manager);
             if(JSON.parse(document.cookie).IsAdmin || ManagerID==JSON.parse(document.cookie).UserID){
                 var delete_butt = document.createElement('button');
                 delete_butt.classList.add('btn', 'btn-outline-danger');
-                delete_butt.setAttribute("project-id", projec_id);
+                delete_butt.setAttribute("project-id", project_id);
                 delete_butt.style.marginRight = "10px";
                 delete_butt.style.marginLeft = "auto";
                 delete_butt.style.cssFloat = "right";
                 delete_butt.innerHTML = "Delele";
                 delete_butt.onclick = function () {
-                    var xhttp = new XMLHttpRequest();
-                    xhttp.onloadend = function () {
-                        if(this.status==204 || this.status==200){
-                            window.location.replace('/');
-                        }
-                        else{
-                            noti(new Date().getTime(),"Fail", "Delete project fail");
+                    if(window.confirm("Are you sure? What's DONE can NOT be UNDONE")){
+                        if(window.confirm("ARE YOU F*CKIN SURE? This is your last chance....")){
+                            if(window.confirm("REALLY???? It will miss you so much :(((")){
+                                var xhttp = new XMLHttpRequest();
+                                xhttp.onloadend = function () {
+                                    if(this.status==204 || this.status==200){
+                                        window.location.replace('/');
+                                    }
+                                    else{
+                                        noti(new Date().getTime(),"Fail", "Delete project fail");
+                                    }
+                                }
+                                xhttp.open("GET", `http://localhost:8080/deleteproject?id=${project_id}&token=${JSON.parse(document.cookie).token}`, true);
+                                xhttp.send();
+                            }
                         }
                     }
-                    xhttp.open("GET", `http://localhost:8080/deleteproject?id=${projec_id}&token=${JSON.parse(document.cookie).token}`, true);
-                    xhttp.send();
                 }
                 container.appendChild(delete_butt);
             }
@@ -106,7 +158,7 @@ function initProjectDetail(callback) {
             callback();
         }
     };
-    xhttp.open("GET", `http://localhost:8080/projectdetail?id=${projec_id}&token=${JSON.parse(document.cookie).token}`, true);
+    xhttp.open("GET", `http://localhost:8080/projectdetail?id=${project_id}&token=${JSON.parse(document.cookie).token}`, true);
     xhttp.send();
 }
 
@@ -328,26 +380,29 @@ function CreateTableFromJSON(myBooks, divContainer) {
                     delete_butt.style.cssFloat = "right";
                     delete_butt.innerHTML = "Delele";
                     delete_butt.onclick = function () {
-                        var instance_id = this.getAttribute("instance-id");
-                        var xhttp = new XMLHttpRequest();
-                        xhttp.onloadend = function () {
-                            console.log(this.status);
-                            if (this.status == 204) {
-                                noti(new Date().getTime(),"Success",'Instance deleted')
-                                initProjectInstances();
+                        if(window.confirm("Are you sure? What's DONE can NOT be UNDONE")){
+                            if(window.confirm("ARE YOU F*CKIN SURE? This is your last chance....")){
+                                var instance_id = this.getAttribute("instance-id");
+                                var xhttp = new XMLHttpRequest();
+                                xhttp.onloadend = function () {
+                                    if (this.status == 204) {
+                                        noti(new Date().getTime(),"Success",'Instance deleted')
+                                        initProjectInstances();
+                                    }
+                                    else if(this.status == 456) {
+                                        window.location.replace("/login");
+                                    }
+                                    else if(this.status == 403){
+                                        noti(new Date().getTime(),"Forbidden","Delete instance fail. You don't have permission");
+                                    }
+                                    else {
+                                        noti(new Date().getTime(),"Fail",'Delete instance fail');
+                                    }
+                                };
+                                xhttp.open("GET", `http://localhost:8080/deleteinstance?id=${instance_id}&token=${JSON.parse(document.cookie).token}`, true);
+                                xhttp.send();
                             }
-                            else if(this.status == 456) {
-                                window.location.replace("/login");
-                            }
-                            else if(this.status == 403){
-                                noti(new Date().getTime(),"Forbidden","Delete instance fail. You don't have permission");
-                            }
-                            else {
-                                noti(new Date().getTime(),"Fail",'Delete instance fail');
-                            }
-                        };
-                        xhttp.open("GET", `http://localhost:8080/deleteinstance?id=${instance_id}&token=${JSON.parse(document.cookie).token}`, true);
-                        xhttp.send();
+                        }
                     };
                     tabCell.appendChild(delete_butt);
                     var edit_butt = document.createElement('button');
@@ -404,6 +459,8 @@ function getlistuserofproject(project_id){
     var xhttp = new XMLHttpRequest();
     xhttp.onloadend = function(){
         if(this.status==200 && this.responseText) {
+            $("#project-list-user-data").html("");
+            $("#instance-list-user-data").html("");
             function createUser(user_id,user_name){
                 $("#project-list-user-data").append(`
                 <a class="list-wrap user-li" href="/user?id=${user_id}">
@@ -412,8 +469,8 @@ function getlistuserofproject(project_id){
                 );
                 $("#instance-list-user-data").append(`
                 <span class="list-wrap">
-                    <input type="checkbox" id="user-${user_id}" user-id="${user_id}"/>
-                    <label for="user-${user_id}" class="list">
+                    <input type="checkbox" id="instance-user-${user_id}" user-id="${user_id}"/>
+                    <label for="instance-user-${user_id}" class="list">
                         <i class="fa fa-check"></i>
                     ${user_name}
                     </label>
@@ -438,7 +495,7 @@ function getlistuserofinstance(instance_id){
     xhttp.onloadend = function(){
         if(this.status==200 && this.responseText) {
             function checkUser(user_id){
-                $(`#user-${user_id}`).prop('checked', true);
+                $(`#instance-user-${user_id}`).prop('checked', true);
             }
             data = JSON.parse(this.responseText);
             data.forEach(element => {
@@ -450,5 +507,51 @@ function getlistuserofinstance(instance_id){
         }
     };
     xhttp.open("GET",  `http://localhost:8080/listinstanceuser?id=${instance_id}&token=${JSON.parse(document.cookie).token}`, true);
+    xhttp.send();
+}
+
+function getlistuser(project_id){
+    $("#project-list-user-data").html("");
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function(){
+        if(this.status==200 && this.responseText) {
+            function createUser(user_id,user_name){
+                $("#project-list-user-data").append(`
+                <span class="list-wrap">
+                    <input type="checkbox" id="project-user-${user_id}" user-id="${user_id}"/>
+                    <label for="project-user-${user_id}" class="list">
+                        <i class="fa fa-check"></i>
+                    ${user_name}
+                    </label>
+                </span>`
+                );
+            }
+            data = JSON.parse(this.responseText);
+            data.forEach(element => {
+                createUser(element.UserID,element.UserName);
+            });
+            var xhttp = new XMLHttpRequest();
+            xhttp.onloadend = function(){
+                if(this.status==200 && this.responseText) {
+                    function checkUser(user_id){
+                        $(`#project-user-${user_id}`).prop('checked', true);
+                    }
+                    data = JSON.parse(this.responseText);
+                    data.forEach(element => {
+                        checkUser(element.UserID);
+                    });
+                }
+                else if(this.status==456){
+                    window.location.replace("/login");
+                }
+            };
+            xhttp.open("GET",  `http://localhost:8080/listprojectuser?id=${project_id}&token=`+JSON.parse(document.cookie).token, true);
+            xhttp.send();
+                }
+                else if(this.status==456){
+                    window.location.replace("/login");
+                }
+    };
+    xhttp.open("GET",  `http://localhost:8080/listalluser?token=`+JSON.parse(document.cookie).token, true);
     xhttp.send();
 }

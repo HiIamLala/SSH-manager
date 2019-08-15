@@ -66,7 +66,7 @@ try{
                                         if(err){
                                             res.sendStatus(500);
                                         }
-                                        else if(result3[0].ProjectManager === user_id){
+                                        else if(result3.ProjectManager === user_id){
                                             query.removeProject(con, project_id, (err,result4)=>{
                                                 if(err){
                                                     res.sendStatus(500);
@@ -205,7 +205,29 @@ try{
                                     });
                                 }
                                 else{
-                                    res.sendStatus(403);
+                                    query.getProjectDetail(con, instance_prop.ProjectID, (err,result2)=>{
+                                        if(err){
+                                            res.sendStatus(500);
+                                        }
+                                        else if(result2){
+                                            if(result2.ProjectManager==result.UserID){
+                                                query.createInstance(con, instance_prop.InstanceName,instance_prop.ARN,instance_prop.IpAddress,instance_prop.SSHKey,instance_prop.ProjectID,instance_prop.InstanceUser,(err,result2)=>{
+                                                    if(err){
+                                                        res.sendStatus(500);
+                                                    }
+                                                    else{
+                                                        res.sendStatus(200);
+                                                    }
+                                                });
+                                            }
+                                            else{
+                                                res.sendStatus(403);
+                                            }
+                                        }
+                                        else{
+                                            res.sendStatus(400);
+                                        }
+                                    })
                                 }
                             }
                             else{
@@ -329,6 +351,68 @@ try{
                 }
             });
 
+            app.post('/updateprojectuser',function (req,res){
+                var token = req.query.token;
+                if(token.length){
+                    if(token.split("@")[0]< new Date().getTime()){
+                        res.sendStatus(456);
+                    }
+                    else{
+                        query.getUserFromToken(con, token,(err,result)=>{
+                            if(err){
+                                res.sendStatus(500);
+                            }
+                            else if(result==null){
+                                res.sendStatus(401);
+                            }
+                            else{
+                                var project_id = req.query.id;
+                                var user_id = result.UserID;
+                                if(result.IsAdmin){
+                                    query.updateUserOfProject(con, project_id, req.body.Users,(err,result2)=>{
+                                        if(err){
+                                            res.sendStatus(500);
+                                        }
+                                        else if(result2){
+                                            res.sendStatus(200);
+                                        }
+                                        else{
+                                            res.sendStatus(400);
+                                        }
+                                    });
+                                }
+                                else{
+                                    if(query.isManagerProject(con, user_id, project_id,(err,result3)=>{
+                                        if(err){
+                                            res.sendStatus(500);
+                                        }
+                                        else if(result3){
+                                            query.updateUserOfProject(con, project_id, req.body.Users,(err,result2)=>{
+                                                if(err){
+                                                    res.sendStatus(500);
+                                                }
+                                                else if(result2){
+                                                    res.sendStatus(200);
+                                                }
+                                                else{
+                                                    res.sendStatus(400);
+                                                }
+                                            });
+                                        }
+                                        else{
+                                            res.sendStatus(403);
+                                        }
+                                    }));
+                                }
+                            }
+                        });
+                    }
+                }
+                else{
+                    res.sendStatus(456);
+                }
+            });
+
             app.get('/projectdetail',  function (req, res) {
                 var token = req.query.token;
                 var project_id = req.query.id;
@@ -420,7 +504,7 @@ try{
                                         }
                                     });
                                 }
-                                else{
+                                else {
                                     var user_id = result.UserID;
                                     query.listProjectInstancesAvail(con, user_id, project_id,(err,result3)=>{
                                         if (err) {

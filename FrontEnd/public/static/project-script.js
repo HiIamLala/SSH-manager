@@ -48,52 +48,54 @@ document.addEventListener("DOMContentLoaded", function () {
             xhttp.setRequestHeader("Content-Type", "application/json");
             xhttp.send(data);
         });
-        $('#project-list-user-footer').attr("project-id",parseURLParams(window.location.href).id);
-        $('#project-list-user-footer').append(`<button type="button" class="btn btn-light" id="project-list-user-edit">Modify Member List</button>`);
-        $('#project-list-user-footer').append(`
-            <div id="project-list-user-editing" style="display:none">
-                <button type="button" class="btn btn-success" id="project-list-user-confirm">Confirm</button>
-                <button type="button" class="btn btn-outline-light" id="project-list-user-cancel" style="right:0px;position:absolute;">Cancel</button>
-            </div>`
-        );
-        $('#project-list-user-edit').click(function(){
-            $('#project-list-user-edit').css('display',"none");
-            $('#project-list-user-editing').css('display',"block");
-            getlistuser(parseURLParams(window.location.href).id);
-        });
-        $('#project-list-user-cancel').click(function(){
-            $('#project-list-user-editing').css('display',"none");
-            $('#project-list-user-edit').css('display',"block");
-            getlistuserofproject(parseURLParams(window.location.href).id);
-        });
-        $('#project-list-user-confirm').click(function(){
-            project_users = [];
-            $('#project-list-user-data').find(':checked').each((index,element)=>{
-                project_users.push(element.getAttribute('user-id'));
+        if(JSON.parse(document.cookie).UserID==ManagerID){
+            $('#project-list-user-footer').attr("project-id",parseURLParams(window.location.href).id);
+            $('#project-list-user-footer').append(`<button type="button" class="btn btn-light" id="project-list-user-edit">Modify Member List</button>`);
+            $('#project-list-user-footer').append(`
+                <div id="project-list-user-editing" style="display:none">
+                    <button type="button" class="btn btn-success" id="project-list-user-confirm">Confirm</button>
+                    <button type="button" class="btn btn-outline-light" id="project-list-user-cancel" style="right:0px;position:absolute;">Cancel</button>
+                </div>`
+            );
+            $('#project-list-user-edit').click(function(){
+                $('#project-list-user-edit').css('display',"none");
+                $('#project-list-user-editing').css('display',"block");
+                getlistuser(parseURLParams(window.location.href).id);
             });
-            var xhttp = new XMLHttpRequest();
-            var formData = JSON.stringify({"Users":project_users});
-            xhttp.onloadend = function () {
-                if (this.status == 200) {
-                    noti(new Date().getTime(),"Success","Update member of project success");
-                }
-                else if(this.status == 403){
-                    noti(new Date().getTime(),"Forbidden","You don't have permission");
-                }
-                else if(this.status == 400){
-                    noti(new Date().getTime(),"Fail","Bad request");
-                }
-                else {
-                    noti(new Date().getTime(),"Fail","Update member of project fail");
-                }
+            $('#project-list-user-cancel').click(function(){
                 $('#project-list-user-editing').css('display',"none");
                 $('#project-list-user-edit').css('display',"block");
                 getlistuserofproject(parseURLParams(window.location.href).id);
-            }
-            xhttp.open("POST",  `http://localhost:8080/updateprojectuser?id=${parseURLParams(window.location.href).id}&token=${JSON.parse(document.cookie).token}`, true);
-            xhttp.setRequestHeader("Content-Type","application/json");
-            xhttp.send(formData);
-        });
+            });
+            $('#project-list-user-confirm').click(function(){
+                project_users = [];
+                $('#project-list-user-data').find(':checked').each((index,element)=>{
+                    project_users.push(element.getAttribute('user-id'));
+                });
+                var xhttp = new XMLHttpRequest();
+                var formData = JSON.stringify({"Users":project_users});
+                xhttp.onloadend = function () {
+                    if (this.status == 200) {
+                        noti(new Date().getTime(),"Success","Update member of project success");
+                    }
+                    else if(this.status == 403){
+                        noti(new Date().getTime(),"Forbidden","You don't have permission");
+                    }
+                    else if(this.status == 400){
+                        noti(new Date().getTime(),"Fail","Bad request");
+                    }
+                    else {
+                        noti(new Date().getTime(),"Fail","Update member of project fail");
+                    }
+                    $('#project-list-user-editing').css('display',"none");
+                    $('#project-list-user-edit').css('display',"block");
+                    getlistuserofproject(parseURLParams(window.location.href).id);
+                }
+                xhttp.open("POST",  `http://localhost:8080/updateprojectuser?id=${parseURLParams(window.location.href).id}&token=${JSON.parse(document.cookie).token}`, true);
+                xhttp.setRequestHeader("Content-Type","application/json");
+                xhttp.send(formData);
+            });
+        }
     });
 });
 

@@ -740,7 +740,7 @@ function updateUserOfProject(con, projec_id, users, callback){
                     throw err;
                 }
                 else{
-                    if(!users.includes(result.ProjectManager)){
+                    if(!users.includes(String(result.ProjectManager))){
                         users.push(result.ProjectManager);
                     }
                     users.forEach(element => {
